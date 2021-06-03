@@ -34,10 +34,13 @@ void lcd_backlight_on();
 void lcd_backlight_off();
 void lcd_swap(void);
 void lcd_sync(void);
-void* lcd_get_active_buffer(void);
-void* lcd_get_inactive_buffer(void);
+#define lcd_get_active_buffer(void) (active_framebuffer ? framebuffer2 : framebuffer1)
+#define lcd_get_inactive_buffer(void) (active_framebuffer ? framebuffer1 : framebuffer2)
+
 
 // To be used by fault handlers
 void lcd_reset_active_buffer(void);
+void lcd_draw_text_6x6(int x, int y, const char* text, unsigned short color);
+void lcd_draw_text_8x8(int x, int y, const char* text, unsigned short color);
 
 #endif

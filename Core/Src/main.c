@@ -132,6 +132,9 @@ __attribute__((optimize("-O0"))) void BSOD(BSOD_t fault, void *pc, void *lr)
   lcd_sync();
   lcd_reset_active_buffer();
 
+  unsigned short* framebuffer = lcd_get_active_buffer(); 
+  for (int i = 0; i < GW_LCD_WIDTH * GW_LCD_HEIGHT; i++) framebuffer[i] = 0x001F;
+  lcd_draw_text_8x8(0, 0, msg, 0xf800);
   //odroid_overlay_draw_text(0, 0, GW_LCD_WIDTH, msg, C_RED, C_BLUE);
 
   // Print each line from the log in reverse
@@ -161,6 +164,8 @@ __attribute__((optimize("-O0"))) void BSOD(BSOD_t fault, void *pc, void *lr)
     end = line;
 
     //y += odroid_overlay_draw_text(0, y, GW_LCD_WIDTH, line, C_WHITE, C_BLUE);
+    lcd_draw_text_8x8(0, y, line, 0xffff);
+    y += 8;
 
     if (line == logbuf) {
       // No more lines to print
@@ -494,6 +499,7 @@ int main(void)
   bq24072_init();
 
   // Launch the app
+  //abort();
   app_main();
 
   while (1)

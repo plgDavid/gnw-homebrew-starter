@@ -1,5 +1,5 @@
 TARGET = gw_test_app
-OPT ?= -g
+OPT ?= -g -Og
 
 C_SOURCES = \
 	Core/Src/test_app.c \
