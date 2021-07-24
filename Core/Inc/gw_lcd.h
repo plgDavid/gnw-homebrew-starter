@@ -9,25 +9,28 @@
 #define GW_LCD_WIDTH  320
 #define GW_LCD_HEIGHT 240
 
+
 #ifdef GW_LCD_MODE_LUT8
-extern uint8_t framebuffer1[GW_LCD_WIDTH * GW_LCD_HEIGHT]  __attribute__((section (".lcd"))) __attribute__ ((aligned (16)));
-extern uint8_t framebuffer2[GW_LCD_WIDTH * GW_LCD_HEIGHT]  __attribute__((section (".lcd"))) __attribute__ ((aligned (16)));
-typedef uint8_t pixel_t;
-#define LCD_COLOR_MAX  0x100
-#define LCD_COLOR_MASK 0xFF
-#define LCD_COLOR_WHITE 0x1
-#define LCD_COLOR_GREY  0x2
+	typedef uint8_t pixel_t;
+	#define LCD_COLOR_MAX  0x100
+	#define LCD_COLOR_MASK UINT8_MAX
+
+	//TODO define these for EACH palette you need
+	#define LCD_COLOR_WHITE  0x1
+	#define LCD_COLOR_GREEN  0x2
+	#define LCD_COLOR_BLUE   0x3//hmm
+	#define LCD_COLOR_YELLOW 0x4//hmm
 #else
-extern uint16_t framebuffer1[GW_LCD_WIDTH * GW_LCD_HEIGHT]  __attribute__((section (".lcd"))) __attribute__ ((aligned (16)));
-extern uint16_t framebuffer2[GW_LCD_WIDTH * GW_LCD_HEIGHT]  __attribute__((section (".lcd"))) __attribute__ ((aligned (16)));
-typedef uint16_t pixel_t;
-#define LCD_COLOR_MAX  0x10000
-#define LCD_COLOR_MASK 0xFFFF
 
-#define LCD_COLOR_WHITE 0xFFFF
-#define LCD_COLOR_GREY  0x0f0f
+	typedef uint16_t pixel_t;
+	#define LCD_COLOR_MAX   0x10000
+	#define LCD_COLOR_MASK  UINT16_MAX
+
+	#define LCD_COLOR_WHITE  0xFFFF
+	#define LCD_COLOR_GREEN  0x0f0f
+	#define LCD_COLOR_BLUE   0x001F
+	#define LCD_COLOR_YELLOW 0xF800
 #endif // GW_LCD_MODE_LUT8
-
 
 // 0 => framebuffer1
 // 1 => framebuffer2
@@ -41,8 +44,9 @@ void lcd_backlight_off();
 void lcd_swap(void);
 void lcd_sync(void);
 
-inline pixel_t* lcd_get_active_buffer  (void){return active_framebuffer ? framebuffer2 : framebuffer1;}
-inline pixel_t* lcd_get_inactive_buffer(void){return active_framebuffer ? framebuffer1 : framebuffer2;}
+pixel_t* lcd_get_active_buffer  (void);
+pixel_t* lcd_get_inactive_buffer(void);
+void lcd_clear_both_framebuffers(void);
 
 // To be used by fault handlers
 void lcd_reset_active_buffer(void);
