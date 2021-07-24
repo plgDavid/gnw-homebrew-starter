@@ -7,6 +7,7 @@
 #include "main.h"
 #include "gw_buttons.h"
 #include "gw_lcd.h"
+#include "gw_audio.h"
 #include "gw_linker.h"
 #include "bq24072.h"
 
@@ -28,26 +29,11 @@ static void clear_screen() {
   memset(framebuffer, 0, GW_LCD_WIDTH * GW_LCD_HEIGHT * sizeof(pixel_t));
 }
 
-
-
 static void draw_point(int32_t x, int32_t y, pixel_t color) {
   pixel_t* framebuffer = lcd_get_active_buffer();
-  if (x >= 0 && x < GW_LCD_WIDTH && y >= 0 && y < GW_LCD_HEIGHT) framebuffer[y * GW_LCD_WIDTH + x] = color;
+  if (x >= 0 && x < GW_LCD_WIDTH && y >= 0 && y < GW_LCD_HEIGHT) 
+	  framebuffer[y * GW_LCD_WIDTH + x] = color;
 }
-
-/*static void hline(int32_t x1, int32_t x2, int32_t y, pixel_t color) {
-  while(x1 < x2) {
-    draw_point(x1, y, color);
-    ++x1;
-  }
-}
-
-static void vline(int32_t x, int32_t y1, int32_t y2, pixel_t color) {
-  while(y1 < y2) {
-    draw_point(x, y1, color);
-    ++y1;
-  }
-}*/
 
 static void draw_rect(int32_t x, int32_t y, int32_t width, int32_t height, pixel_t color) {
   if (x < 0) {
@@ -58,7 +44,7 @@ static void draw_rect(int32_t x, int32_t y, int32_t width, int32_t height, pixel
     height += y;
     y = 0;
   }
-  if (x + width > GW_LCD_WIDTH) width = GW_LCD_WIDTH - x;
+  if (x + width  > GW_LCD_WIDTH)  width  = GW_LCD_WIDTH - x;
   if (y + height > GW_LCD_HEIGHT) height = GW_LCD_HEIGHT - y;
 
   pixel_t* framebuffer = lcd_get_active_buffer();
@@ -102,43 +88,40 @@ static void draw_circle(int32_t xm, int32_t ym, int32_t r, pixel_t color) {
    } while (x < 0);
 }
 
-/*static void draw_char(int32_t x, int32_t y, u8 c, pixel_t color) {
-  for (int32_t j = 0; j < CHAR_HEIGHT; j++) {
-    u8 row = FONT[c * CHAR_HEIGHT + j];
-    for (int32_t i = 0; i < CHAR_WIDTH; i++) {
-      u8 bit = row & (1 << i);
-      if (bit != 0) draw_point(x + i, y + j, color);
-    }
-  }
-}
+int num_audio_process=0;
 
-static void draw_text(int32_t x, int32_t y, const char* text, pixel_t color) {
-  int32_t i = x;
-  while(*text) {
-    if (*text == '\n') {
-      i = x;
-      y += CHAR_HEIGHT;
-    } else {
-      draw_char(i, y, *text, color);
-      i += CHAR_WIDTH;
-    }
-    text++;
-  }
-}*/
+void gw_audio_process(int16_t*buffer, uint32_t samples){
+	
+	//this is just a test
+	static const int16_t SINE[64]={
+		0xfa0,0x1128,0x12ac,0x1429,0x159b,0x16fe,0x184e,0x198a,0x1aac,0x1bb4,0x1c9e,0x1d68,0x1e10,0x1e94,0x1ef3,0x1f2d,
+		0x1f40,0x1f2d,0x1ef3,0x1e94,0x1e10,0x1d68,0x1c9e,0x1bb4,0x1aac,0x198a,0x184e,0x16fe,0x159b,0x1429,0x12ac,0x1128,
+		0xfa0,0xe18,0xc94,0xb17,0x9a5,0x842,0x6f2,0x5b6,0x494,0x38c,0x2a2,0x1d8,0x130,0xac,0x4d,0x13,
+		0x0,0x13,0x4d,0xac,0x130,0x1d8,0x2a2,0x38c,0x494,0x5b6,0x6f2,0x842,0x9a5,0xb17,0xc94,0xe18,
+	};
+
+	static uint8_t saw=0;
+	for(uint32_t i=0;i<samples;++i){
+		*buffer++ = SINE[saw++&63];
+	}
+
+	num_audio_process++;
+}
 
 int mode = 7;
 int frame = 0;
 
-static void update() {
+void gw_lcd_update() {
 
   static const char* battery_state[4] = {"missing", "charging", "discharging", "full"};
 
   char buffer[1024];
 
-  snprintf(buffer, 1024, "%s %s\nsizeof(pixel_t)=%d\n\nFRAME=%d\nbuttons=%lx\nbat=%d%% %s\n\nA = BSOD\n<> = change demo\nPAUSE = reboot", 
+  snprintf(buffer, 1024, "%s %s\nCPU SPEED=%d\nsizeof(pixel_t)=%d\n\nFRAME=%d\nAUDIO=%d\nbuttons=%lx\nbat=%d%% %s\n\nA = BSOD\n<> = change demo\nPAUSE = reboot", 
 	  __DATE__,__TIME__, 
+	  SystemCoreClock,
 	  sizeof(pixel_t),
-	  frame, buttons_get(), bq24072_get_percent_filtered(), battery_state[bq24072_get_state()]);
+	  frame, num_audio_process, buttons_get(), bq24072_get_percent_filtered(), battery_state[bq24072_get_state()]);
   frame++;
 
   pixel_t* framebuffer = lcd_get_active_buffer();
@@ -217,34 +200,44 @@ int button_released(uint32_t button) {
   return result;
 }
 
-void app_main() {
+void 
+app_main() {
 
-  lcd_backlight_set(255);
-  lcd_clear_both_framebuffers();
+	lcd_backlight_set(255);
+	lcd_clear_both_framebuffers();
 
-  int running = 1;
-  while (running) {
-    wdog_refresh();
-    if (button_released(B_PAUSE)) { // quit (reboots if has nothing else to do)
-      running = 0;
-      break;
-    } 
-    if (button_released(B_POWER)) { // shutdown
-      GW_EnterDeepSleep();
-    }
-    if (button_released(B_Right)) { // next demo
-      lcd_clear_both_framebuffers();
-      mode++; if(mode > 7) mode = 0;
-    }
-    if (button_released(B_Left)) { // prev demo
-      lcd_clear_both_framebuffers();
-      mode--; if(mode < 0) mode = 7;
-    }
-    if (button_released(B_A)) { // test BSOD
-      abort();
-    }
-    update();
-    lcd_swap();
-    HAL_Delay(20);
-  }
+	gw_audio_start();
+
+	int running = 1;
+	while (running) {
+
+		wdog_refresh();
+
+		if (button_released(B_PAUSE)) { // quit (reboots if has nothing else to do)
+			running = 0;
+			break;
+		} 
+
+		if (button_released(B_POWER)) { // shutdown
+			GW_EnterDeepSleep();
+		}
+
+		if (button_released(B_Right)) { // next demo
+			lcd_clear_both_framebuffers();
+			mode++; if(mode > 7) mode = 0;
+		}
+
+		if (button_released(B_Left)) { // prev demo
+			lcd_clear_both_framebuffers();
+			mode--; if(mode < 0) mode = 7;
+		}
+
+		if (button_released(B_A)) { // test BSOD
+			abort();
+		}
+
+		gw_lcd_update();
+		lcd_swap();
+		HAL_Delay(20);
+	}
 }

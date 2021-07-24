@@ -26,6 +26,7 @@
 #include "gw_buttons.h"
 #include "gw_flash.h"
 #include "gw_lcd.h"
+#include "gw_audio.h"
 #include "gw_linker.h"
 
 #include "bq24072.h"
@@ -78,8 +79,7 @@ __attribute__((used)) __attribute__((section (".persistent"))) volatile uint32_t
 
 uint32_t boot_buttons;
 
-#define uSE_THE_WATCHDOG
-
+uint32_t uptime_s;
 
 /* USER CODE END PV */
 
@@ -95,15 +95,13 @@ static void MX_SAI1_Init(void);
 static void MX_RTC_Init(void);
 static void MX_DAC1_Init(void);
 static void MX_DAC2_Init(void);
-#ifdef USE_THE_WATCHDOG
 static void MX_WWDG1_Init(void);
-#endif
 static void MX_ADC1_Init(void);
 static void MX_TIM1_Init(void);
 static void MX_NVIC_Init(void);
 /* USER CODE BEGIN PFP */
 
-void app_main(void);
+void app_main();
 
 /* USER CODE END PFP */
 
@@ -138,7 +136,7 @@ __attribute__((optimize("-O0"))) void BSOD(BSOD_t fault, void *pc, void *lr)
 
   pixel_t* framebuffer = lcd_get_active_buffer(); 
   for (int i = 0; i < GW_LCD_WIDTH * GW_LCD_HEIGHT; i++) 
-	  framebuffer[i] = 0x1F;//this should change if using paletised
+	  framebuffer[i] = LCD_COLOR_BLUE;//this should change if using paletised
 
   lcd_draw_text_8x8(0, 0, msg, LCD_COLOR_YELLOW);
   //odroid_overlay_draw_text(0, 0, GW_LCD_WIDTH, msg, C_RED, C_BLUE);
@@ -217,6 +215,29 @@ int _write(int file, char *ptr, int len)
 }
 #endif
 
+static void flash_read(uint8_t cmd, uint8_t *buf, size_t len)
+{
+  OSPI_DisableMemoryMapped(&hospi1);
+  OSPI_ReadBytes(&hospi1, cmd, buf, len);
+  OSPI_EnableMemoryMappedMode(&hospi1);
+}
+
+void flash_read_jedec_id(uint8_t *data)
+{
+  flash_read(0x9F, data, 3);
+}
+
+void flash_read_status_reg(uint8_t *data)
+{
+  flash_read(0x05, data, 1);
+}
+
+void flash_set_quad_enable(uint8_t enable)
+{
+  OSPI_DisableMemoryMapped(&hospi1);
+  OSPI_SetQuadEnable(&hospi1, enable);
+  OSPI_EnableMemoryMappedMode(&hospi1);
+}
 
 void store_erase(const uint8_t *flash_ptr, size_t size)
 {
@@ -297,6 +318,16 @@ uint32_t boot_magic_get(void)
   return boot_magic;
 }
 
+void uptime_inc(void)
+{
+  uptime_s++;
+}
+
+uint32_t uptime_get(void)
+{
+  return uptime_s;
+}
+
 void GW_EnterDeepSleep(void)
 {
   // Stop SAI DMA (audio)
@@ -349,9 +380,7 @@ static void memcpy_no_check(uint32_t *dst, uint32_t *src, size_t len)
 
 void wdog_refresh()
 {
-	#ifdef USE_THE_WATCHDOG
 	HAL_WWDG_Refresh(&hwwdg1);
-	#endif
 }
 
 /* USER CODE END 0 */
@@ -440,9 +469,7 @@ int main(void)
   MX_RTC_Init();
   MX_DAC1_Init();
   MX_DAC2_Init();
-#ifdef USE_THE_WATCHDOG
   MX_WWDG1_Init(); 
-#endif
   MX_ADC1_Init();
   MX_TIM1_Init();
 
@@ -471,7 +498,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
 
   SCB_EnableICache();
-  SCB_EnableDCache();
+  //SCB_EnableDCache();
 
   // Initialize the external flash
 
@@ -482,6 +509,10 @@ int main(void)
   OSPI_Init(&hospi1, quad_mode);
 
   OSPI_EnableMemoryMappedMode(&hospi1);
+
+  uint8_t jedec_id[3] = {0};
+  flash_read_jedec_id(jedec_id);
+  printf("Flash JEDEC ID: %02X %02X %02X\n", jedec_id[0], jedec_id[1], jedec_id[2]);
 
   // Copy instructions and data from extflash to axiram
   void *copy_areas[3];
@@ -515,7 +546,6 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-    //sleep();
 
     /* USER CODE BEGIN 3 */
 
@@ -985,31 +1015,31 @@ static void MX_RTC_Init(void)
 static void MX_SAI1_Init(void)
 {
 
-  /* USER CODE BEGIN SAI1_Init 0 */
+	/* USER CODE BEGIN SAI1_Init 0 */
 
-  /* USER CODE END SAI1_Init 0 */
+	/* USER CODE END SAI1_Init 0 */
 
-  /* USER CODE BEGIN SAI1_Init 1 */
+	/* USER CODE BEGIN SAI1_Init 1 */
 
-  /* USER CODE END SAI1_Init 1 */
-  hsai_BlockA1.Instance = SAI1_Block_A;
-  hsai_BlockA1.Init.AudioMode = SAI_MODEMASTER_TX;
-  hsai_BlockA1.Init.Synchro = SAI_ASYNCHRONOUS;
-  hsai_BlockA1.Init.OutputDrive = SAI_OUTPUTDRIVE_DISABLE;
-  hsai_BlockA1.Init.NoDivider = SAI_MASTERDIVIDER_ENABLE;
-  hsai_BlockA1.Init.FIFOThreshold = SAI_FIFOTHRESHOLD_FULL;
-  hsai_BlockA1.Init.AudioFrequency = SAI_AUDIO_FREQUENCY_48K;
-  hsai_BlockA1.Init.SynchroExt = SAI_SYNCEXT_DISABLE;
-  hsai_BlockA1.Init.MonoStereoMode = SAI_MONOMODE;
-  hsai_BlockA1.Init.CompandingMode = SAI_NOCOMPANDING;
-  hsai_BlockA1.Init.TriState = SAI_OUTPUT_NOTRELEASED;
-  if (HAL_SAI_InitProtocol(&hsai_BlockA1, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_16BIT, 2) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN SAI1_Init 2 */
+	/* USER CODE END SAI1_Init 1 */
+	hsai_BlockA1.Instance = SAI1_Block_A;
+	hsai_BlockA1.Init.AudioMode = SAI_MODEMASTER_TX;
+	hsai_BlockA1.Init.Synchro = SAI_ASYNCHRONOUS;
+	hsai_BlockA1.Init.OutputDrive = SAI_OUTPUTDRIVE_DISABLE;
+	hsai_BlockA1.Init.NoDivider = SAI_MASTERDIVIDER_ENABLE;
+	hsai_BlockA1.Init.FIFOThreshold = SAI_FIFOTHRESHOLD_FULL;
+	hsai_BlockA1.Init.AudioFrequency = AUDIO_SAMPLE_RATE;//defined in gw_audio 
+	hsai_BlockA1.Init.SynchroExt = SAI_SYNCEXT_DISABLE;
+	hsai_BlockA1.Init.MonoStereoMode = SAI_MONOMODE;
+	hsai_BlockA1.Init.CompandingMode = SAI_NOCOMPANDING;
+	hsai_BlockA1.Init.TriState = SAI_OUTPUT_NOTRELEASED;
+	if (HAL_SAI_InitProtocol(&hsai_BlockA1, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_16BIT, 2) != HAL_OK)
+	{
+		Error_Handler();
+	}
+	/* USER CODE BEGIN SAI1_Init 2 */
 
-  /* USER CODE END SAI1_Init 2 */
+	/* USER CODE END SAI1_Init 2 */
 
 }
 
@@ -1113,7 +1143,6 @@ static void MX_TIM1_Init(void)
   * @param None
   * @retval None
   */
-#ifdef USE_THE_WATCHDOG
 static void MX_WWDG1_Init(void)
 {
 
@@ -1138,7 +1167,6 @@ static void MX_WWDG1_Init(void)
   /* USER CODE END WWDG1_Init 2 */
 
 }
-#endif
 
 /**
   * Enable DMA controller clock
