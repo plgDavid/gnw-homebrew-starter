@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>//abort
 #include <string.h>
 #include <assert.h>
 #include <stdint.h>
@@ -27,10 +28,7 @@ static void clear_screen() {
   memset(framebuffer, 0, GW_LCD_WIDTH * GW_LCD_HEIGHT * sizeof(pixel_t));
 }
 
-static void clear_both_framebuffers() {
-  memset(framebuffer1, 0, GW_LCD_WIDTH * GW_LCD_HEIGHT * sizeof(pixel_t));
-  memset(framebuffer2, 0, GW_LCD_WIDTH * GW_LCD_HEIGHT * sizeof(pixel_t));
-}
+
 
 static void draw_point(int32_t x, int32_t y, pixel_t color) {
   pixel_t* framebuffer = lcd_get_active_buffer();
@@ -133,9 +131,14 @@ int frame = 0;
 
 static void update() {
 
+  static const char* battery_state[4] = {"missing", "charging", "discharging", "full"};
+
   char buffer[1024];
-  char* battery_state[4] = {"missing", "charging", "discharging", "full"};
-  snprintf(buffer, 1024, "%s\n\nFRAME=%d\nbuttons=%lx\nbat=%d%% %s\n\nA = BSOD\n<> = change demo\nPAUSE = reboot", __DATE__,frame, buttons_get(), bq24072_get_percent_filtered(), battery_state[bq24072_get_state()]);
+
+  snprintf(buffer, 1024, "%s %s\nsizeof(pixel_t)=%d\n\nFRAME=%d\nbuttons=%lx\nbat=%d%% %s\n\nA = BSOD\n<> = change demo\nPAUSE = reboot", 
+	  __DATE__,__TIME__, 
+	  sizeof(pixel_t),
+	  frame, buttons_get(), bq24072_get_percent_filtered(), battery_state[bq24072_get_state()]);
   frame++;
 
   pixel_t* framebuffer = lcd_get_active_buffer();
@@ -193,7 +196,7 @@ static void update() {
     case 7:
       clear_screen();
       //draw_text(50, 50, buffer, 0x0f0f);
-      lcd_draw_text_8x8(50, 50, buffer, LCD_COLOR_GREY);
+      lcd_draw_text_8x8(50, 50, buffer, LCD_COLOR_GREEN);
       break;
   }
 }
@@ -217,8 +220,7 @@ int button_released(uint32_t button) {
 void app_main() {
 
   lcd_backlight_set(255);
-  memset(framebuffer1, 0x0, sizeof(framebuffer1));
-  memset(framebuffer2, 0x0, sizeof(framebuffer2));
+  lcd_clear_both_framebuffers();
 
   int running = 1;
   while (running) {
@@ -231,11 +233,11 @@ void app_main() {
       GW_EnterDeepSleep();
     }
     if (button_released(B_Right)) { // next demo
-      clear_both_framebuffers();
+      lcd_clear_both_framebuffers();
       mode++; if(mode > 7) mode = 0;
     }
     if (button_released(B_Left)) { // prev demo
-      clear_both_framebuffers();
+      lcd_clear_both_framebuffers();
       mode--; if(mode < 0) mode = 7;
     }
     if (button_released(B_A)) { // test BSOD

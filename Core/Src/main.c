@@ -80,11 +80,6 @@ uint32_t boot_buttons;
 
 #define uSE_THE_WATCHDOG
 
-#ifdef GW_LCD_MODE_LUT8
-#define LCD_BLUE 1 //TODO index
-#else
-#define LCD_BLUE 0x1F
-#endif
 
 /* USER CODE END PV */
 
@@ -145,7 +140,7 @@ __attribute__((optimize("-O0"))) void BSOD(BSOD_t fault, void *pc, void *lr)
   for (int i = 0; i < GW_LCD_WIDTH * GW_LCD_HEIGHT; i++) 
 	  framebuffer[i] = 0x1F;//this should change if using paletised
 
-  lcd_draw_text_8x8(0, 0, msg, 0xf800);
+  lcd_draw_text_8x8(0, 0, msg, LCD_COLOR_YELLOW);
   //odroid_overlay_draw_text(0, 0, GW_LCD_WIDTH, msg, C_RED, C_BLUE);
 
   // Print each line from the log in reverse
@@ -175,7 +170,7 @@ __attribute__((optimize("-O0"))) void BSOD(BSOD_t fault, void *pc, void *lr)
     end = line;
 
     //y += odroid_overlay_draw_text(0, y, GW_LCD_WIDTH, line, C_WHITE, C_BLUE);
-    lcd_draw_text_8x8(0, y, line, 0xffff);
+    lcd_draw_text_8x8(0, y, line, LCD_COLOR_WHITE);
     y += 8;
 
     if (line == logbuf) {
@@ -840,7 +835,6 @@ static void MX_LTDC_Init(void)
 #ifdef GW_LCD_MODE_LUT8
   pLayerCfg.PixelFormat = LTDC_PIXEL_FORMAT_L8;
 #else
-  sdasd
   pLayerCfg.PixelFormat = LTDC_PIXEL_FORMAT_RGB565;
 #endif
   pLayerCfg.Alpha = 255;
