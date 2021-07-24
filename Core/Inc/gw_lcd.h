@@ -9,7 +9,6 @@
 #define GW_LCD_WIDTH  320
 #define GW_LCD_HEIGHT 240
 
-
 #ifdef GW_LCD_MODE_LUT8
 	typedef uint8_t pixel_t;
 	#define LCD_COLOR_MAX  0x100
@@ -52,5 +51,9 @@ void lcd_clear_both_framebuffers(void);
 void lcd_reset_active_buffer(void);
 void lcd_draw_text_6x6(int x, int y, const char* text, pixel_t color);
 void lcd_draw_text_8x8(int x, int y, const char* text, pixel_t color);
+
+
+//USER IMPLEMENT ME!!! (refresh)
+void gw_lcd_update(void);
 
 #endif
