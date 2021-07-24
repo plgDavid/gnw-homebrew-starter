@@ -1,6 +1,9 @@
 TARGET = gw_test_app
 OPT ?= -g -Og
 
+#$(USERPATH) needs changing obviously
+PERIFLIB_PATH = $(USERPATH)/STM32Cube/Repository/STM32Cube_FW_H7_V1.8.0
+
 C_SOURCES = \
 	Core/Src/test_app.c \
 	Core/Src/system_stm32h7xx.c \
@@ -12,38 +15,38 @@ C_SOURCES = \
 	Core/Src/gw_alloc.c \
 	Core/Src/main.c \
 	Core/Src/bq24072.c \
-	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_sai_ex.c \
-	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_spi.c \
-	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_adc_ex.c \
-	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_hsem.c \
-	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_rtc.c \
-	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_pwr.c \
-	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_wwdg.c \
-	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_tim.c \
-	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_dac.c \
-	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_ltdc_ex.c \
-	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_i2c.c \
-	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_rtc_ex.c \
-	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_rcc_ex.c \
-	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_flash_ex.c \
-	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_ospi.c \
-	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_adc.c \
-	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal.c \
-	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_dma_ex.c \
-	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_cortex.c \
-	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_rcc.c \
-	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_ltdc.c \
-	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_i2c_ex.c \
-	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_flash.c \
-	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_pwr_ex.c \
-	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_gpio.c \
-	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_dma.c \
-	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_exti.c \
-	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_mdma.c \
-	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_spi_ex.c \
-	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_dac_ex.c \
-	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_tim_ex.c \
-	Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_sai.c \
+	$(PERIFLIB_PATH)/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_sai_ex.c \
+	$(PERIFLIB_PATH)/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_spi.c \
+	$(PERIFLIB_PATH)/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_adc_ex.c \
+	$(PERIFLIB_PATH)/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_hsem.c \
+	$(PERIFLIB_PATH)/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_rtc.c \
+	$(PERIFLIB_PATH)/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_pwr.c \
+	$(PERIFLIB_PATH)/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_wwdg.c \
+	$(PERIFLIB_PATH)/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_tim.c \
+	$(PERIFLIB_PATH)/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_dac.c \
+	$(PERIFLIB_PATH)/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_ltdc_ex.c \
+	$(PERIFLIB_PATH)/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_i2c.c \
+	$(PERIFLIB_PATH)/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_rtc_ex.c \
+	$(PERIFLIB_PATH)/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_rcc_ex.c \
+	$(PERIFLIB_PATH)/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_flash_ex.c \
+	$(PERIFLIB_PATH)/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_ospi.c \
+	$(PERIFLIB_PATH)/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_adc.c \
+	$(PERIFLIB_PATH)/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal.c \
+	$(PERIFLIB_PATH)/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_dma_ex.c \
+	$(PERIFLIB_PATH)/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_cortex.c \
+	$(PERIFLIB_PATH)/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_rcc.c \
+	$(PERIFLIB_PATH)/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_ltdc.c \
+	$(PERIFLIB_PATH)/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_i2c_ex.c \
+	$(PERIFLIB_PATH)/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_flash.c \
+	$(PERIFLIB_PATH)/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_pwr_ex.c \
+	$(PERIFLIB_PATH)/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_gpio.c \
+	$(PERIFLIB_PATH)/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_dma.c \
+	$(PERIFLIB_PATH)/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_exti.c \
+	$(PERIFLIB_PATH)/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_mdma.c \
+	$(PERIFLIB_PATH)/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_spi_ex.c \
+	$(PERIFLIB_PATH)/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_dac_ex.c \
+	$(PERIFLIB_PATH)/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_tim_ex.c \
+	$(PERIFLIB_PATH)/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_sai.c \
 
 C_INCLUDES +=  \
 	-ICore/Inc \
