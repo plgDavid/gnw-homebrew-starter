@@ -498,7 +498,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
 
   SCB_EnableICache();
-  //SCB_EnableDCache();
+  SCB_EnableDCache();
 
   // Initialize the external flash
 
