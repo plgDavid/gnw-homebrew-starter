@@ -12,6 +12,7 @@ C_SOURCES = \
 	Core/Src/stm32h7xx_hal_msp.c \
 	Core/Src/gw_flash.c \
 	Core/Src/gw_lcd.c \
+	Core/Src/gw_audio.c \
 	Core/Src/gw_alloc.c \
 	Core/Src/main.c \
 	Core/Src/bq24072.c \
