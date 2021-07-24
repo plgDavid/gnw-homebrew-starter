@@ -50,13 +50,13 @@ C_SOURCES = \
 
 C_INCLUDES +=  \
 	-ICore/Inc \
-	-IDrivers/STM32H7xx_HAL_Driver/Inc \
-	-IDrivers/STM32H7xx_HAL_Driver/Inc/Legacy \
-	-IDrivers/CMSIS/Device/ST/STM32H7xx/Include \
-	-IDrivers/CMSIS/Include \
+	-I$(PERIFLIB_PATH)/Drivers/STM32H7xx_HAL_Driver/Inc \
+	-I$(PERIFLIB_PATH)/Drivers/STM32H7xx_HAL_Driver/Inc/Legacy \
+	-I$(PERIFLIB_PATH)/Drivers/CMSIS/Device/ST/STM32H7xx/Include \
+	-I$(PERIFLIB_PATH)/Drivers/CMSIS/Include \
 
 ASM_SOURCES =  \
-	Drivers/CMSIS/Device/ST/STM32H7xx/Source/Templates/gcc/startup_stm32h7b0xx.s \
+	$(PERIFLIB_PATH)/Drivers/CMSIS/Device/ST/STM32H7xx/Source/Templates/gcc/startup_stm32h7b0xx.s \
 	Core/Src/memcpy-armv7m.s \
 
 # setup arm toolchain
