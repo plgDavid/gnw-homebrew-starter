@@ -73,11 +73,18 @@ WWDG_HandleTypeDef hwwdg1;
 /* USER CODE BEGIN PV */
 
 char logbuf[1024 * 4] __attribute__((section (".persistent"))) __attribute__((aligned(4)));
-uint32_t log_idx __attribute__((section (".persistent")));
+uint32_t log_idx      __attribute__((section (".persistent")));
 __attribute__((used)) __attribute__((section (".persistent"))) volatile uint32_t boot_magic;
 
 uint32_t boot_buttons;
 
+#define uSE_THE_WATCHDOG
+
+#ifdef GW_LCD_MODE_LUT8
+#define LCD_BLUE 1 //TODO index
+#else
+#define LCD_BLUE 0x1F
+#endif
 
 /* USER CODE END PV */
 
@@ -93,7 +100,9 @@ static void MX_SAI1_Init(void);
 static void MX_RTC_Init(void);
 static void MX_DAC1_Init(void);
 static void MX_DAC2_Init(void);
+#ifdef USE_THE_WATCHDOG
 static void MX_WWDG1_Init(void);
+#endif
 static void MX_ADC1_Init(void);
 static void MX_TIM1_Init(void);
 static void MX_NVIC_Init(void);
@@ -132,8 +141,10 @@ __attribute__((optimize("-O0"))) void BSOD(BSOD_t fault, void *pc, void *lr)
   lcd_sync();
   lcd_reset_active_buffer();
 
-  unsigned short* framebuffer = lcd_get_active_buffer(); 
-  for (int i = 0; i < GW_LCD_WIDTH * GW_LCD_HEIGHT; i++) framebuffer[i] = 0x001F;
+  pixel_t* framebuffer = lcd_get_active_buffer(); 
+  for (int i = 0; i < GW_LCD_WIDTH * GW_LCD_HEIGHT; i++) 
+	  framebuffer[i] = 0x1F;//this should change if using paletised
+
   lcd_draw_text_8x8(0, 0, msg, 0xf800);
   //odroid_overlay_draw_text(0, 0, GW_LCD_WIDTH, msg, C_RED, C_BLUE);
 
@@ -343,7 +354,9 @@ static void memcpy_no_check(uint32_t *dst, uint32_t *src, size_t len)
 
 void wdog_refresh()
 {
-  HAL_WWDG_Refresh(&hwwdg1);
+	#ifdef USE_THE_WATCHDOG
+	HAL_WWDG_Refresh(&hwwdg1);
+	#endif
 }
 
 /* USER CODE END 0 */
@@ -432,7 +445,9 @@ int main(void)
   MX_RTC_Init();
   MX_DAC1_Init();
   MX_DAC2_Init();
-  MX_WWDG1_Init();
+#ifdef USE_THE_WATCHDOG
+  MX_WWDG1_Init(); 
+#endif
   MX_ADC1_Init();
   MX_TIM1_Init();
 
@@ -771,6 +786,16 @@ static void MX_DAC2_Init(void)
 
 }
 
+#define APHA 0xFF
+
+static const uint8_t smpte8_pal[64] = {
+    0x04, 0x02, 0x02, APHA, 0xAC, 0x02, 0x02, APHA, 0xAC, 0xB6, 0xB6, APHA, 0xAC, 0xB6, 0x02, APHA,
+    0xAC, 0x02, 0xB6, APHA, 0x04, 0x02, 0xB6, APHA, 0x04, 0xB6, 0xB6, APHA, 0x04, 0xB6, 0x02, APHA,
+    0x54, 0x26, 0x02, APHA, 0xFC, 0xFE, 0xFE, APHA, 0x54, 0x02, 0x26, APHA, 0x00, 0x00, 0x00, APHA,
+    0x00, 0x00, 0x80, APHA, 0x00, 0x80, 0x00, APHA, 0x00, 0x80, 0x80, APHA, 0x80, 0x00, 0x00, APHA
+};
+uint32_t* vidPalAdd=(uint32_t*)smpte8_pal;
+
 /**
   * @brief LTDC Initialization Function
   * @param None
@@ -809,21 +834,22 @@ static void MX_LTDC_Init(void)
     Error_Handler();
   }
   pLayerCfg.WindowX0 = 0;
-  pLayerCfg.WindowX1 = 320;
+  pLayerCfg.WindowX1 = GW_LCD_WIDTH;
   pLayerCfg.WindowY0 = 0;
-  pLayerCfg.WindowY1 = 240;
+  pLayerCfg.WindowY1 = GW_LCD_HEIGHT;
 #ifdef GW_LCD_MODE_LUT8
   pLayerCfg.PixelFormat = LTDC_PIXEL_FORMAT_L8;
 #else
+  sdasd
   pLayerCfg.PixelFormat = LTDC_PIXEL_FORMAT_RGB565;
 #endif
   pLayerCfg.Alpha = 255;
   pLayerCfg.Alpha0 = 255;
   pLayerCfg.BlendingFactor1 = LTDC_BLENDING_FACTOR1_CA;
   pLayerCfg.BlendingFactor2 = LTDC_BLENDING_FACTOR2_CA;
-  pLayerCfg.FBStartAdress = 0x24000000;
-  pLayerCfg.ImageWidth = 320;
-  pLayerCfg.ImageHeight = 240;
+  pLayerCfg.FBStartAdress = 0x24000000;//davidv this is hardcoded hum.
+  pLayerCfg.ImageWidth = GW_LCD_WIDTH;
+  pLayerCfg.ImageHeight = GW_LCD_HEIGHT;
   pLayerCfg.Backcolor.Blue = 0;
   pLayerCfg.Backcolor.Green = 255;
   pLayerCfg.Backcolor.Red = 0;
@@ -832,6 +858,11 @@ static void MX_LTDC_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN LTDC_Init 2 */
+
+#ifdef GW_LCD_MODE_LUT8
+  HAL_LTDC_ConfigCLUT(&hltdc, vidPalAdd, 256, 0); 
+  HAL_LTDC_EnableCLUT(&hltdc, 0);   
+#endif
 
   /* USER CODE END LTDC_Init 2 */
 
@@ -1088,6 +1119,7 @@ static void MX_TIM1_Init(void)
   * @param None
   * @retval None
   */
+#ifdef USE_THE_WATCHDOG
 static void MX_WWDG1_Init(void)
 {
 
@@ -1112,6 +1144,7 @@ static void MX_WWDG1_Init(void)
   /* USER CODE END WWDG1_Init 2 */
 
 }
+#endif
 
 /**
   * Enable DMA controller clock
